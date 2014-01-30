@@ -29,21 +29,22 @@
     // `pfx` is a function that takes a standard CSS property name as a parameter
     // and returns it's prefixed version valid for current browser it runs in.
     // The code is heavily inspired by Modernizr http://www.modernizr.com/
+    // 返回适合当前浏览器的样式前缀 pfx(prop)
     var pfx = (function () {
         
         var style = document.createElement('dummy').style,
-            prefixes = 'Webkit Moz O ms Khtml'.split(' '),
+            prefixes = 'Webkit Moz O ms Khtml'.split(' '),  // ["Webkit", "Moz", "O", "ms", "Khtml"]
             memory = {};
         
         return function ( prop ) {
             if ( typeof memory[ prop ] === "undefined" ) {
                 
-                var ucProp  = prop.charAt(0).toUpperCase() + prop.substr(1),
-                    props   = (prop + ' ' + prefixes.join(ucProp + ' ') + ucProp).split(' ');
+                var ucProp  = prop.charAt(0).toUpperCase() + prop.substr(1),  // eg. Transorm
+                    props   = (prop + ' ' + prefixes.join(ucProp + ' ') + ucProp).split(' '); // eg. ["transform", "WebkitTransform", "MozTransform", "OTransform", "msTransform", "KhtmlTransform"]
                 
                 memory[ prop ] = null;
                 for ( var i in props ) {
-                    if ( style[ props[i] ] !== undefined ) {
+                    if ( style[ props[i] ] !== undefined ) { // style[porp] == "" | undefined
                         memory[ prop ] = props[i];
                         break;
                     }
@@ -58,6 +59,7 @@
     
     // `arraify` takes an array-like object and turns it into real Array
     // to make all the Array.prototype goodness available.
+    // 将类数组转换为数组
     var arrayify = function ( a ) {
         return [].slice.call( a );
     };
@@ -65,10 +67,11 @@
     // `css` function applies the styles given in `props` object to the element
     // given as `el`. It runs all property names through `pfx` function to make
     // sure proper prefixed version of the property is used.
+    // 将props样式组的样式根据前缀函数应用在所给的el元素上
     var css = function ( el, props ) {
         var key, pkey;
         for ( key in props ) {
-            if ( props.hasOwnProperty(key) ) {
+            if ( props.hasOwnProperty(key) ) {  // 不是继承而来的
                 pkey = pfx(key);
                 if ( pkey !== null ) {
                     el.style[pkey] = props[key];
@@ -86,12 +89,14 @@
     };
     
     // `byId` returns element with given `id` - you probably have guessed that ;)
+    // 根据Id获取元素
     var byId = function ( id ) {
         return document.getElementById(id);
     };
     
     // `$` returns first element for given CSS `selector` in the `context` of
     // the given element or whole document.
+    // 在context里面或者document里面寻找第一个符和CSS选择的元素 eg. document.querySelector("#test");
     var $ = function ( selector, context ) {
         context = context || document;
         return context.querySelector(selector);
@@ -99,6 +104,7 @@
     
     // `$$` return an array of elements for given CSS `selector` in the `context` of
     // the given element or whole document.
+    // 在context或者document里面寻找所有的符合CSS选择的元素 eg. document.querySelectorAll("#test");
     var $$ = function ( selector, context ) {
         context = context || document;
         return arrayify( context.querySelectorAll(selector) );
@@ -106,6 +112,7 @@
     
     // `triggerEvent` builds a custom DOM event with given `eventName` and `detail` data
     // and triggers it on element given as `el`.
+    // 创建事件eventName，并绑定到元素el上
     var triggerEvent = function (el, eventName, detail) {
         var event = document.createEvent("CustomEvent");
         event.initCustomEvent(eventName, true, true, detail);
@@ -113,6 +120,7 @@
     };
     
     // `translate` builds a translate transform string for given data.
+    // 根据t.x t.y t.z 返回translate3d(t.x px, t.y px, t.z px)
     var translate = function ( t ) {
         return " translate3d(" + t.x + "px," + t.y + "px," + t.z + "px) ";
     };
@@ -120,6 +128,7 @@
     // `rotate` builds a rotate transform string for given data.
     // By default the rotations are in X Y Z order that can be reverted by passing `true`
     // as second parameter.
+    // 根据r.x r.y r.z 返回"rotateX(..) rotateY(..) rotateZ(..)"，revert参数代表是否反转顺序
     var rotate = function ( r, revert ) {
         var rX = " rotateX(" + r.x + "deg) ",
             rY = " rotateY(" + r.y + "deg) ",
@@ -129,17 +138,20 @@
     };
     
     // `scale` builds a scale transform string for given data.
+    // 根据s返回"scale(s)"
     var scale = function ( s ) {
         return " scale(" + s + ") ";
     };
     
     // `perspective` builds a perspective transform string for given data.
+    // 根据p返回"perspective(p px)"
     var perspective = function ( p ) {
         return " perspective(" + p + "px) ";
     };
     
     // `getElementFromHash` returns an element located by id from hash part of
     // window location.
+    // 根据URL返回#id或#/id的id
     var getElementFromHash = function () {
         // get id from url # by removing `#` or `#/` from the beginning,
         // so both "fallback" `#slide-id` and "enhanced" `#/slide-id` will work
@@ -148,6 +160,7 @@
     
     // `computeWindowScale` counts the scale factor between window size and size
     // defined for the presentation in the config.
+    // 返回长宽比例windos/config中小的值，确保不超过config.max，不小于config.min
     var computeWindowScale = function ( config ) {
         var hScale = window.innerHeight / config.height,
             wScale = window.innerWidth / config.width,
@@ -168,6 +181,7 @@
     var body = document.body;
     
     var ua = navigator.userAgent.toLowerCase();
+    // 是否支持imress.js 1.支持3D 2.支持classList dataset APIs 3.非iphone ipod android
     var impressSupported = 
                           // browser should support CSS 3D transtorms 
                            ( pfx("perspective") !== null ) &&
@@ -181,6 +195,7 @@
                           // good enough to run impress.js properly, sorry...
                            ( ua.search(/(iphone)|(ipod)|(android)/) === -1 );
     
+    // 为body元素添加类"impress-not-supported" or "impress-supported"
     if (!impressSupported) {
         // we can't be sure that `classList` is supported
         body.className += " impress-not-supported ";
@@ -315,6 +330,7 @@
             if ( !el.id ) {
                 el.id = "step-" + (idx + 1);
             }
+            // console.log(el.id);
             
             stepsData["impress-" + el.id] = step;
             
@@ -334,6 +350,7 @@
             
             // First we set up the viewport for mobile devices.
             // For some reason iPad goes nuts when it is not done properly.
+            // 设置mobile的viewport
             var meta = $("meta[name='viewport']") || document.createElement("meta");
             meta.content = "width=device-width, minimum-scale=1, maximum-scale=1, user-scalable=no";
             if (meta.parentNode !== document.head) {
@@ -355,12 +372,14 @@
             windowScale = computeWindowScale( config );
             
             // wrap steps with "canvas" element
+            // 将step元素包含在一个名"canvas"的div里面
             arrayify( root.childNodes ).forEach(function ( el ) {
                 canvas.appendChild( el );
             });
             root.appendChild(canvas);
             
             // set initial styles
+            // 设置html高度100%
             document.documentElement.style.height = "100%";
             
             css(body, {
